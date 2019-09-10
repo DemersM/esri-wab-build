@@ -94,7 +94,23 @@ function writeAppConfig() {
 }
 
 function writeProfile() {
-  var profileStr = "profile = " + JSON.stringify(profile, null, 2) + ";";
+
+  function replacer(key, value) {
+    // wrap RegExp so we can find later
+    if (value instanceof RegExp) {
+      return ("__REGEXP " + value.toString() +  " REGEXP__");
+    }
+    else
+      return value;
+  }
+
+  // use replacer function to wrap any RegEx so we can find it
+  var tmpProfileStr = "profile = " + JSON.stringify(profile, replacer, 2) + ";";
+  // convert back to RegEx before writing to file
+  var profileStr = tmpProfileStr.replace(/"__REGEXP (.*) REGEXP__"/g, function(match, p1) {
+    // unescape backslashes since this was stringified
+    return p1.replace(/\\\\/g,"\\");
+  });
   fs.writeFileSync(wProfileFile, profileStr, "utf-8");
 }
 
